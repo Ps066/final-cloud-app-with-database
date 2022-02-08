@@ -11,6 +11,17 @@ import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 # Create your views here.
+from .models import Course, Enrollment, Question, Choice, Submission
+
+
+
+
+
+
+
+
+
+
 
 
 def registration_request(request):
@@ -134,3 +145,36 @@ def enroll(request, course_id):
 
 
 
+def submit(request, course_id):
+    user=request.user
+    enrollment= Enrollment.objects.get(user=user, course=course)
+    submission= Submission.objects.create(enrollment=enrollment)
+    selected_choices = extract_answers(request)
+    for choice in selected_choices:
+        c = Choice.objects.filter(id = int(choice)).get()
+        submission.choices.add(c)
+    submission.save()
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course_id, submission.id)))
+
+def extract_answers(request):
+   submitted_anwsers = []
+   for key in request.POST:
+       if key.startswith('choice'):
+           value = request.POST[key]
+           choice_id = int(value)
+           submitted_anwsers.append(choice_id)
+   return submitted_anwsers
+
+
+def show_exam_result(request, course_id, submission_id):
+    context = {}
+    course = get_object_or_404(Course, pk=course_id)
+    submission = get_object_or_404(Submission, pk=submission_id)
+    selected_choices = Submission.objects.filter(id = submission_id).values_list('choices', flat=True)
+    grade = 0
+    for i in submission.choices.all().filter(is_correct=True).values_list('question_id'):
+        grade += Question.objects.filter(id=i[0]).first().grade
+    context['course'] = course
+    context['selected_ids'] = selected_choices
+    context['grade'] = grade
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
