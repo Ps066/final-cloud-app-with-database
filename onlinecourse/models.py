@@ -107,13 +107,13 @@ class Enrollment(models.Model):
     # question grade/mark
 
     # <HINT> A sample model method to calculate if learner get the score of the question
-    def is_get_score(self, selected_ids):
-        all_answers = self.choice_set.filter(is_correct=True).count()
-        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-        if all_answers == selected_correct:
-            return True
-        else:
-            return False
+    #def is_get_score(self, selected_ids):
+     #   all_answers = self.choice_set.filter(is_correct=True).count()
+     #   selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+     #   if all_answers == selected_correct:
+     #      return True
+     #  else:
+     #      return False
 
 
 #  <HINT> Create a Choice Model with:
@@ -131,13 +131,22 @@ class Enrollment(models.Model):
 
     
 class Question(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     question_no=models.IntegerField()
-    Question_text=models.CharField(max_length=300)
-    grade=models.IntegerField(default=0)
+    question_text=models.TextField(default="text")
+    grade=models.IntegerField(default=1)
+    
+    def is_get_score(self, selected_ids):
+       all_answers = self.choice_set.filter(is_correct=True).count()
+       selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+       if all_answers == selected_correct:
+           return True
+       else:
+           return False
     
 class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
     choice_text=models.CharField(max_length=10)
-    question_id = models.CharField(max_length=50)
     is_correct=models.BooleanField()
 
 class Submission(models.Model):
