@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 # Create your views here.
 from .models import Course, Enrollment, Question, Choice, Submission
-
+from . import utils
 
 
 
@@ -104,14 +104,20 @@ def enroll(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     user = request.user
 
-    is_enrolled = check_if_enrolled(user, course)
-    if not is_enrolled and user.is_authenticated:
-        # Create an enrollment
-        Enrollment.objects.create(user=user, course=course, mode='honor')
-        course.total_enrollment += 1
-        course.save()
+    is_enrolled = utils.check_if_enrolled(user, course)
+    if user.is_authenticated:
+        if not is_enrolled:
+            # Create an enrollment
+            Enrollment.objects.create(user=user, course=course, mode='honor')
+            course.total_enrollment += 1
+            course.save()
 
-    return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
+        return HttpResponseRedirect(reverse(
+            viewname='onlinecourse:course_details',
+            args=(course.id,)
+        ))
+
+    return redirect('onlinecourse:login')
 
 
 # <HINT> Create a submit view to create an exam submission record for a course enrollment,
